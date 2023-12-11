@@ -110,6 +110,7 @@ def main():
 
     print(count)
 
+    grid.append("0" * len(grid[0]))
     curr = n[0]
     curr_dir = d[0]
     left = set()
@@ -151,7 +152,7 @@ def main():
     while queue:
         queue.update(walk(queue.pop(), right))
 
-    print(len(left) if (0, 0) in right else len(right))
+    print(len(left) if (len(grid), 0) in right else len(right))
 
 
 if __name__ == "__main__":
