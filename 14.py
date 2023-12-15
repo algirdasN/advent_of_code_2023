@@ -1,4 +1,5 @@
 from collections import defaultdict
+from itertools import count
 
 
 def move_h(grid, forward=False):
@@ -34,6 +35,29 @@ def main():
         grid = [list(x) for x in file.read().split("\n")]
 
     print(get_weight(move_v(grid)))
+
+    loop_count = 0
+    weights = []
+    for i in count():
+        grid = move_v(grid, False)
+        grid = move_h(grid, False)
+        grid = move_v(grid, True)
+        grid = move_h(grid, True)
+        weights.append(get_weight(grid))
+
+        if loop_count and weights[-j:] == weights[-2 * j: -j]:
+            loop_count += 1
+        else:
+            loop_count = 0
+            for j in range(1, i // 2):
+                if weights[-j:] == weights[-2 * j: -j]:
+                    loop_count += 1
+                    break
+
+        if loop_count > 100:
+            break
+
+    print(weights[-j:][(1_000_000_000 - i) % j - 2])
 
 
 if __name__ == "__main__":
