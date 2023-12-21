@@ -37,37 +37,43 @@ class Workflow:
     def apply(self, part: Part):
         for i in self.instructions:
             x = i.split(":")
-            if len(x) > 1 and not eval("part." + x[0]):
-                continue
-            return x[-1] if x[-1] in ("A", "R") else self.workflows[x[-1]].apply(part)
+            if len(x) == 1 or eval("part." + x[0]):
+                return x[-1] if x[-1] in ("A", "R") else self.workflows[x[-1]].apply(part)
 
     def apply_theory(self, part: TheoreticPart):
+        if part.possible() == 0:
+            return []
+
         valid_parts = []
 
         for i in self.instructions:
             x = i.split(":")
 
-            if len(x) > 1:
-                v = int(x[0][2:])
-                r = getattr(part, x[0][0])
-                if v in r:
-                    if "<" in x[0]:
-                        new_part = copy(part)
-                        setattr(part, x[0][0], range(v, r.stop))
-                        setattr(new_part, x[0][0], range(r.start, v))
-                    else:
-                        new_part = copy(part)
-                        setattr(part, x[0][0], range(r.start, v + 1))
-                        setattr(new_part, x[0][0], range(v + 1, r.stop))
+            if len(x) == 1:
+                break
 
-                    valid_parts.extend(self.apply_theory(new_part))
-                    continue
+            v = int(x[0][2:])
+            r = getattr(part, x[0][0])
 
-            valid_parts.extend([part] if x[-1] == "A"
-                               else [] if x[-1] == "R"
-            else self.workflows[x[-1]].apply_theory(part))
+            if ("<" in x[0] and r.stop <= v) or (">" in x[0] and r.start > v):
+                break
 
-            return valid_parts
+            if v not in r:
+                continue
+
+            new_part = copy(part)
+            if "<" in x[0]:
+                setattr(part, x[0][0], range(v, r.stop))
+                setattr(new_part, x[0][0], range(r.start, v))
+            else:
+                setattr(part, x[0][0], range(r.start, v + 1))
+                setattr(new_part, x[0][0], range(v + 1, r.stop))
+            valid_parts.extend(self.apply_theory(new_part))
+
+        valid_parts.extend([part] if x[-1] == "A"
+                           else [] if x[-1] == "R" else self.workflows[x[-1]].apply_theory(part))
+
+        return valid_parts
 
 
 def main():
