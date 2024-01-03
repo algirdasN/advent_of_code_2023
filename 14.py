@@ -30,14 +30,18 @@ def get_weight(grid):
     return sum((len(grid) - i) * r.count("O") for i, r in enumerate(grid))
 
 
+def get_state(grid):
+    return bytes(1 if x == "O" else 0 for row in grid for x in row)
+
+
 def main():
     with open("data/14.txt") as file:
         grid = [list(x) for x in file.read().split("\n")]
 
     print(get_weight(move_v(grid)))
 
-    loop_count = 0
     weights = []
+    states = []
     for i in count():
         grid = move_v(grid, False)
         grid = move_h(grid, False)
@@ -45,19 +49,15 @@ def main():
         grid = move_h(grid, True)
         weights.append(get_weight(grid))
 
-        if loop_count and weights[-j:] == weights[-2 * j: -j]:
-            loop_count += 1
-        else:
-            loop_count = 0
-            for j in range(1, i // 2):
-                if weights[-j:] == weights[-2 * j: -j]:
-                    loop_count += 1
-                    break
+        new_state = get_state(grid)
+        try:
+            j = len(states) - states.index(new_state)
+        except ValueError:
+            states.append(new_state)
+            continue
 
-        if loop_count > 100:
-            break
-
-    print(weights[-j:][(1_000_000_000 - i) % j - 2])
+        print(weights[-j:][(1_000_000_000 - i) % j - 2])
+        break
 
 
 if __name__ == "__main__":
