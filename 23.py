@@ -1,18 +1,21 @@
 from collections import deque, defaultdict
 
 
-def build_graph(grid):
-    start = (0, grid[0].index("."))
-    end = (len(grid) - 1, grid[-1].index("."))
+def build_graph(grid, start, end, directed):
     graph = defaultdict(dict)
 
-    dir_map = ((0, 1), (1, 0), (0, -1), (-1, 0))
+    dir_map = {
+        ">": (0, 1),
+        "v": (1, 0),
+        "<": (0, -1),
+        "^": (-1, 0)
+    }
 
     move_queue = deque()
-    move_queue.append(((1, start[1]), start, (1, 0), 1))
+    move_queue.append(((1, start[1]), start, (1, 0), 1, True))
 
     while move_queue:
-        curr, prev, last_dir, move = move_queue.pop()
+        curr, prev, last_dir, move, both_way = move_queue.pop()
 
         if curr == end:
             graph[prev][end] = move
@@ -22,12 +25,19 @@ def build_graph(grid):
             continue
 
         valid_dir = []
-        for d in dir_map:
+        for d in dir_map.values():
             if d[0] == -last_dir[0] and d[1] == -last_dir[1]:
                 continue
 
             if grid[curr[0] + d[0]][curr[1] + d[1]] == "#":
                 continue
+
+            cell = grid[curr[0]][curr[1]]
+            if directed and cell in dir_map:
+                if d != dir_map[cell]:
+                    continue
+                else:
+                    both_way = False
 
             valid_dir.append(d)
 
@@ -36,84 +46,32 @@ def build_graph(grid):
                 continue
             case 1:
                 d = valid_dir[0]
-                move_queue.append(((curr[0] + d[0], curr[1] + d[1]), prev, d, move + 1))
+                move_queue.append(((curr[0] + d[0], curr[1] + d[1]), prev, d, move + 1, both_way))
             case _:
                 graph[prev][curr] = move
-                if prev[0] > 0:
+                if prev[0] > 0 and both_way:
                     graph[curr][prev] = move
                 for d in valid_dir:
-                    move_queue.append(((curr[0] + d[0], curr[1] + d[1]), curr, d, 1))
+                    move_queue.append(((curr[0] + d[0], curr[1] + d[1]), curr, d, 1, True))
 
     return graph
 
 
-def main():
-    with open("data/23.txt") as file:
-        grid = file.read().split("\n")
-
-    dir_map = {
-        ">": (0, 1),
-        "v": (1, 0),
-        "<": (0, -1),
-        "^": (-1, 0)
-    }
-    start = (0, grid[0].index("."))
-    end = (len(grid) - 1, grid[-1].index("."))
-
+def get_max_moves(graph, start, end):
     visited = []
-
-    move_queue = deque()
-    move_queue.append((start, 0))
-
     max_move = 0
-
-    while move_queue:
-        curr, move = move_queue.pop()
-        if curr[0] not in range(len(grid)) or curr[1] not in range(len(grid[0])):
-            continue
-
-        if curr == end:
-            max_move = max(max_move, move)
-            continue
-
-        if grid[curr[0]][curr[1]] == "#":
-            continue
-
-        if curr in visited:
-            continue
-
-        if move < len(visited):
-            visited[move:] = []
-
-        visited.append(curr)
-
-        if grid[curr[0]][curr[1]] in dir_map:
-            d = dir_map[grid[curr[0]][curr[1]]]
-            move_queue.append(((curr[0] + d[0], curr[1] + d[1]), move + 1))
-        else:
-            for d in dir_map.values():
-                move_queue.append(((curr[0] + d[0], curr[1] + d[1]), move + 1))
-
-    print(max_move)
-
-    graph = build_graph(grid)
-    visited = []
 
     move_queue = deque()
     move_queue.append((start, 0, 0))
-
-    max_move = 0
 
     while move_queue:
         curr, index, total = move_queue.pop()
 
         if curr == end:
-            if total > max_move:
-                max_move = total
+            max_move = max(max_move, total)
             continue
 
-        if index < len(visited):
-            visited[index:] = []
+        visited[index:] = []
 
         if curr in visited:
             continue
@@ -123,7 +81,21 @@ def main():
         for k, v in graph[curr].items():
             move_queue.append((k, index + 1, total + v))
 
-    print(max_move)
+    return max_move
+
+
+def main():
+    with open("data/23.txt") as file:
+        grid = file.read().split("\n")
+
+    start = (0, grid[0].index("."))
+    end = (len(grid) - 1, grid[-1].index("."))
+
+    d_graph = build_graph(grid, start, end, True)
+    print(get_max_moves(d_graph, start, end))
+
+    graph = build_graph(grid, start, end, False)
+    print(get_max_moves(graph, start, end))
 
 
 if __name__ == "__main__":
