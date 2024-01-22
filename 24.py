@@ -5,15 +5,30 @@ class Hailstone:
         self.px, self.py, self.pz = [int(x) for x in data[0].split(", ")]
         self.vx, self.vy, self.vz = [int(x) for x in data[1].split(", ")]
 
+        self.hn = [self.vy, -self.vx, self.py * self.vx - self.px * self.vy]
+
     def intersects_xy(self, other, start, end):
-        divisor = self.vy * other.vx - self.vx * other.vy
-        if divisor == 0:
+        prod = [
+            self.hn[1] * other.hn[2] - other.hn[1] * self.hn[2],
+            other.hn[0] * self.hn[2] - self.hn[0] * other.hn[2],
+            self.hn[0] * other.hn[1] - other.hn[0] * self.hn[1]
+        ]
+
+        if prod[2] == 0:
             return False
 
-        t1 = (other.vx * (other.py - self.py) + other.vy * (self.px - other.px)) / divisor
-        x = self.px + self.vx * t1
-        y = self.py + self.vy * t1
-        t2 = (x - other.px) / other.vx
+        x = prod[0] / prod[2]
+        y = prod[1] / prod[2]
+
+        try:
+            t1 = (x - self.px) / self.vx
+        except ZeroDivisionError:
+            t1 = (y - self.py) / self.vy
+
+        try:
+            t2 = (x - other.px) / other.vx
+        except ZeroDivisionError:
+            t2 = (y - other.py) / other.vy
 
         return t1 > 0 and t2 > 0 and start <= x <= end and start <= y <= end
 
