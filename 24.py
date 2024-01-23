@@ -1,3 +1,6 @@
+import sympy as sp
+
+
 class Hailstone:
 
     def __init__(self, data):
@@ -46,6 +49,20 @@ def main():
                 count += 1
 
     print(count)
+
+    px, py, pz, vx, vy, vz, t1, t2, t3 = sp.symbols("px, py, pz, vx, vy, vz, t1, t2, t3")
+
+    equations = []
+    for i, t in enumerate([t1, t2, t3]):
+        equations.extend([
+            px + vx * t - hail[i].px - hail[i].vx * t,
+            py + vy * t - hail[i].py - hail[i].vy * t,
+            pz + vz * t - hail[i].pz - hail[i].vz * t
+        ])
+
+    sol = sp.solve(equations, [px, py, pz, vx, vy, vz, t1, t2, t3], dict=True)
+
+    print(sol[0][px] + sol[0][py] + sol[0][pz])
 
 
 if __name__ == "__main__":
